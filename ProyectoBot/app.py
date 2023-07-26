@@ -1,5 +1,6 @@
 from flask import Flask, request
 import sett
+import services
 
 app = Flask(__name__)
 
@@ -22,6 +23,25 @@ def verificar_token():
     except Exception as e:
         return e, 403
     
+@app.route("/webhook", methods=["POST"])
+def recibir_mensaje():
+    try:
+        body = request.get_json()
+        entry= body["entry"][0]
+        changes = entry["changes"][0]
+        value = changes["value"]
+        message = value["message"][0]
+        number = message["from"]
+        messageId = message["id"]
+        contacts = value["contacts"][0]
+        name = contacts["profile"]["name"]
+        text = services.obtener_mensaje_whatsapp(message)
+
+        services.administrar_chatbot(text, number, messageId, name)
+        return "Enviado"
+
+    except Exception as e:
+        return "no enviado" + str(e)
 
 
 if __name__=="__main__":
